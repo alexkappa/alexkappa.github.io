@@ -63,7 +63,7 @@ menu:
 # This text will appear in a `<small>` tag in the footer of every page.
 copyright:             > 
   © 2020 Alex Kalyvitis. All rights reserved. <br>
-  Cover photo by [Jake Blucker](https://unsplash.com/@jakeblucker) on [Unsplash](https://unsplash.com/)
+  Cover photo by [Daniel J. Schwarz](https://unsplash.com/@danieljschwarz) on [Unsplash](https://unsplash.com/)
 
 # Format of the permalinks
 permalink:             /:title/
@@ -78,7 +78,7 @@ paginate_path:         /page-:num/
 # ========================================================================================
 
 # Sidebar image and theme color of the site.
-accent_image:          /assets/img/jake-blucker-unsplash.jpg
+accent_image:          /assets/img/daniel-j-schwarz-XmC9mBSCPzM-unsplash.jpg
 accent_color:          rgb(217,218,220)
 
 # This is used for the `theme-color` meta tag,
