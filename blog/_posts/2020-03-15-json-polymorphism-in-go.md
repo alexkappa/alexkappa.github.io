@@ -19,25 +19,25 @@ Let’s take an example that is commonly used to describe this problem. A fleet 
 ```json
 {
     "vehicles": [
-    {
-        "type": "car",
-        "make": "BMW",
-        "model": "M3",
-        "seatingCapacity": 4,
-        "topSpeed": 250
-    },
-    {
-        "type": "truck",
-        "make": "Volvo",
-        "model": "FH",
-        "payloadCapacity": 40000
-    },
-    {
-        "type": "bike",
-        "make": "Yamaha",
-        "model": "YZF-R1",
-        "topSpeed": 293
-    }
+        {
+            "type": "car",
+            "make": "BMW",
+            "model": "M3",
+            "seatingCapacity": 4,
+            "topSpeed": 250
+        },
+        {
+            "type": "truck",
+            "make": "Volvo",
+            "model": "FH",
+            "payloadCapacity": 40000
+        },
+        {
+            "type": "bike",
+            "make": "Yamaha",
+            "model": "YZF-R1",
+            "topSpeed": 293
+        }
     ]
 }
 ```
