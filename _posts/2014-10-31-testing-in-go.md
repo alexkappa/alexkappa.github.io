@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Testing in Go
+category: go
 ---
 
 I've been hearing a lot of positive feedback about Google's new programming language for some time now. Interfaces, simplicity, concurrency are some of the things you will definitely hear being praised as you get involved with the community.

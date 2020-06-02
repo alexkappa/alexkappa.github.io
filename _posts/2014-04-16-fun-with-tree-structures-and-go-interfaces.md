@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Fun with binary expression trees and Go
+category: go
 ---
 
 Recently, I found myself trying to implement a mechanism, able to evaluate expressions. Essentially what I needed was a [binary expression tree](http://en.wikipedia.org/wiki/Binary_expression_tree). I used Go for this project, and quickly came to a delightful surprise that using Go's extremely powerful interface mechanisms, it became extremely easy to implement and extend.
