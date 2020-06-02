@@ -1,6 +1,7 @@
 ---
 layout: post
 title: JSON polymorphism in Go
+category: go
 ---
 
 How to serialize and deserialize polymorphic JSON into Go structures.

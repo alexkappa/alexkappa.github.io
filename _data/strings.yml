@@ -34,7 +34,7 @@ loading:               Loading…
 redirecting:           Redirecting…
 
 continue_reading:      >
-  Continue reading <!--post_title-->
+  Continue reading: <!--post_title-->
 
 cookies_banner:
   text:                >
