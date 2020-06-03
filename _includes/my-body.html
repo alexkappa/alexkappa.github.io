@@ -1,3 +1,37 @@
 {% comment %}<!--
 Use this add elements to the <body/> of the document.
 -->{% endcomment %}
+<script>
+
+    let textBox = document.querySelector(".sidebar-about > h2 > a");
+    let textBoxText = textBox.innerHTML;
+
+    let altText = [textBoxText, "alexkappa"];
+    let altTextIndex = 0;
+
+    let interval = 5000;
+    let intervalId = window.setInterval(changeText, interval);
+
+    window.setTimeout(() => {
+        window.clearInterval(intervalId);
+    }, 2 * interval);
+
+    function fadeOut() {
+        textBox.style.opacity = 0;
+    }
+
+    function fadeIn() {
+        textBox.style.opacity = 1;
+    }
+
+    function changeInnerHtml() {
+        altTextIndex = ++altTextIndex % altText.length;
+        textBox.innerHTML = altText[altTextIndex];
+    }
+
+    function changeText() {
+        fadeOut();
+        window.setTimeout(changeInnerHtml, 500);
+        window.setTimeout(fadeIn, 500);
+    }
+</script>

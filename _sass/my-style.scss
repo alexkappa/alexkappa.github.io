@@ -1,17 +1,24 @@
 // You can add CSS rules here that will be inlucded in Hydejack's CSS file
 
 @font-face {
-    font-family: "PF DinDisplay Pro";
-    src: url("/assets/fonts/PFDinDisplayPro-Light.eot");
-    src: local("/assets/fonts/PFDinDisplayPro-Light"),
-        url("/assets/fonts/PFDinDisplayPro-Light.eot?#iefix") format("embedded-opentype"),
-        url("/assets/fonts/PFDinDisplayPro-Light.woff") format("woff"),
-        url("/assets/fonts/PFDinDisplayPro-Light.ttf") format("truetype");
-    font-weight: normal;
-    font-style: italic;
+    font-family: 'PF DinDisplay Pro';
+    src: url('/assets/fonts/PFDinDisplayPro-Thin.eot');
+    src: url('/assets/fonts/PFDinDisplayPro-Thin.eot?#iefix') format('embedded-opentype'),
+        url('/assets/fonts/PFDinDisplayPro-Thin.woff') format('woff'),
+        url('/assets/fonts/PFDinDisplayPro-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
 }
 
-$code-font-family: Inconsolata, monospace;
+@font-face {
+    font-family: 'PF DinDisplay Pro';
+    src: url('/assets/fonts/PFDinDisplayPro-ThinItalic.eot');
+    src: url('/assets/fonts/PFDinDisplayPro-ThinItalic.eot?#iefix') format('embedded-opentype'),
+        url('/assets/fonts/PFDinDisplayPro-ThinItalic.woff') format('woff'),
+        url('/assets/fonts/PFDinDisplayPro-ThinItalic.ttf') format('truetype');
+    font-weight: 100;
+    font-style: italic;
+}
 
 .dl-table {
     a {
@@ -21,6 +28,11 @@ $code-font-family: Inconsolata, monospace;
     .btn {
         margin: 1.5rem 0;
     }
+}
+
+.sidebar-about > h2 > a {
+    font-style: italic;
+    transition: 0.5s;
 }
 
 .content a:not(.btn) {
