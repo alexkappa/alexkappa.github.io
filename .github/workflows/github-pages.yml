@@ -9,7 +9,9 @@ jobs:
   github-pages:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: helaili/jekyll-action@2.0.3
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Jekyll Action
+        uses: helaili/jekyll-action@2.4.0
         env:
           JEKYLL_PAT: ${{ secrets.JEKYLL_PAT }}
