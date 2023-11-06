@@ -2,6 +2,7 @@
 layout: post
 title: Testing in Go
 category: go
+author: alex
 ---
 
 I've been hearing a lot of positive feedback about Google's new programming language for some time now. Interfaces, simplicity, concurrency are some of the things you will definitely hear being praised as you get involved with the community.
@@ -54,7 +55,7 @@ import (
 func TestHandleFoo(t *testing.T) {
 	r, _ := http.NewRequest("", "", nil)
 	w := httptest.NewRecorder()
-	
+
     handleFoo(w, r)
 
 	if w.Body.String() != "bar" {

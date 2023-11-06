@@ -15,8 +15,15 @@ title: About
 hide_description: false
 ---
 
-Hi 👋, I'm Alex! I'm a Software Engineering leader based in Amsterdam, The Netherlands.
+Hi 👋, I'm Alex! I'm a Software Engineering leader based in Amsterdam, The
+Netherlands.
 
-I work at [Blueground](https://www.theblueground.com/) as Director of Software Engineering. Before that I've lead teams at [Beat](https://thebeat.co) and served as a CTO at Kambr and Yieldr.
+I work at [Blueground](https://www.theblueground.com/) as Director of Software
+Engineering. Before that I've lead teams at [Beat](https://thebeat.co) and
+served as a CTO at Kambr and Yieldr.
 
-On my free time I work on a few personal or community projects. I've created the [Auth0 Terraform Provider](https://github.com/alexkappa/terraform-provider-auth0) as well as the [Auth0 SDK for Go](https://github.com/go-auth0/auth0). The project has since been acquired by Auth0 and is maintained by the company itself.
+On my free time I work on a few personal or community projects. I've created the
+[Auth0 Terraform Provider](https://github.com/alexkappa/terraform-provider-auth0)
+as well as the [Auth0 SDK for Go](https://github.com/go-auth0/auth0). The
+project has since been acquired by Auth0 and is maintained by the company
+itself.

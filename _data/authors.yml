@@ -8,7 +8,7 @@ alex:
   # Used at the bottom of each page and at the top of the `about` layout
   # Markdown enabled, can use multiple paragraphs (enabled by `|`)
   about:             |
-    Software Engineer. Leader. Made in 🇨🇾. Tuned in 🇳🇱.
+    Software Engineer. Leader. Made in 🇨🇾. Fine-tuned in 🇳🇱.
 
   # This photo will be used in the about section
   picture:
@@ -19,7 +19,7 @@ alex:
       2x:            /assets/img/me.jpg
 
   # Social media icons in sidebar
-  # Comment/uncommet to show/hide
+  # Comment/uncomment to show/hide
   # Rearrange to change the order in which they appear
   social:
     github:          alexkappa

@@ -19,7 +19,7 @@ url:                   https://alexkappa.com
 lang:                  en
 
 # The title of your blog. Used in the sidebar and the browser tab.
-title:                 alex kalyvitis
+title:                 Alex Kalyvitis
 
 # A short description (~150 chars) of the page used for the meta description tag.
 # Can use markdown, but no more than one paragraph (enforced by `>`)
@@ -88,7 +88,7 @@ theme_color:           rgb(41,41,43)
 
 # The string encoding which fonts to fetch from Google Fonts.
 # See: <https://hydejack.com/docs/configuration/>
-google_fonts:          Inconsolata:500;700|Noto+Sans:300,300i,700,700i
+google_fonts:          "Inconsolata:500;700|Noto+Sans:300,300i,700,700i"
 
 # The text font. Expects a string that is a valid CSS font-family value.
 # To change font-weight, see _sass/variables.scss
@@ -98,7 +98,7 @@ font:                  "'Noto Sans', sans-serif"
 # To change font-weight, see _sass/variables.scss
 font_heading:          "'Noto Sans', sans-serif"
 
-defaults:
+defaults: []
   # `jekyll-seo-tag` will mark collection outputs as `BlogPosting`,
   # but we want them to be `WebPage`s:
   # - scope:
@@ -115,7 +115,7 @@ defaults:
   #     type:            featured_tags
   #   values:
   #     seo:
-  #       type:          WebPage`
+  #       type:          WebPage
 
 
 # 3rd Party Integrations

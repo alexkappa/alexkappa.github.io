@@ -2,6 +2,7 @@
 layout: post
 title: JSON polymorphism in Go
 category: go
+author: alex
 ---
 
 How to serialize and deserialize polymorphic JSON into Go structures.
@@ -19,27 +20,27 @@ Let’s take an example that is commonly used to describe this problem. A fleet 
 
 ```json
 {
-    "vehicles": [
-        {
-            "type": "car",
-            "make": "BMW",
-            "model": "M3",
-            "seatingCapacity": 4,
-            "topSpeed": 250
-        },
-        {
-            "type": "truck",
-            "make": "Volvo",
-            "model": "FH",
-            "payloadCapacity": 40000
-        },
-        {
-            "type": "bike",
-            "make": "Yamaha",
-            "model": "YZF-R1",
-            "topSpeed": 293
-        }
-    ]
+  "vehicles": [
+    {
+      "type": "car",
+      "make": "BMW",
+      "model": "M3",
+      "seatingCapacity": 4,
+      "topSpeed": 250
+    },
+    {
+      "type": "truck",
+      "make": "Volvo",
+      "model": "FH",
+      "payloadCapacity": 40000
+    },
+    {
+      "type": "bike",
+      "make": "Yamaha",
+      "model": "YZF-R1",
+      "topSpeed": 293
+    }
+  ]
 }
 ```
 
@@ -174,7 +175,7 @@ if err != nil {
 for _, vehicle := range f.Vehicles {
 
     switch v := vehicle.(type) {
-    case *Car: 
+    case *Car:
         fmt.Printf("%s %s has a seating capacity of %d and a top speed of %.2f km/h\n",
             v.Make,
             v.Model,

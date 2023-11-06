@@ -2,6 +2,7 @@
 layout: post
 title: Fun with binary expression trees and Go
 category: go
+author: alex
 ---
 
 Recently, I found myself trying to implement a mechanism, able to evaluate expressions. Essentially what I needed was a [binary expression tree](http://en.wikipedia.org/wiki/Binary_expression_tree). I used Go for this project, and quickly came to a delightful surprise that using Go's extremely powerful interface mechanisms, it became extremely easy to implement and extend.
@@ -13,7 +14,7 @@ From Wikipedia:
 
 > A binary expression tree is a specific application of a binary tree to evaluate certain expressions. Two common types of expressions that a binary expression tree can represent are algebraic and boolean. These trees can represent expressions that contain both unary and binary operators.
 
-> The leaves of a binary expression tree are operands, such as constants or variable names, and the other nodes contain operators. 
+> The leaves of a binary expression tree are operands, such as constants or variable names, and the other nodes contain operators.
 
 > These particular trees happen to be binary, because all of the operations are binary, and although this is the simplest case, it is possible for nodes to have more than two children. It is also possible for a node to have only one child, as is the case with the unary minus operator. An expression tree, T, can be evaluated by applying the operator at the root to the values obtained by recursively evaluating the left and right subtrees.
 
@@ -27,11 +28,10 @@ So a binary expression tree
 
 Our need for binary expression trees arose by wanting to evaluate whether a set of url query parameters matches a particular pattern. So the pattern `date >= 2014-01-01` should evaluate for `/path?date=2014-10-10` but should not evaluate for `/path?date=2013-12-12`. Alright that was too easy. How about combining conditions together with logical operators?
 
-	(date >= 2014-01-01) AND (lang == "EN")
+    (date >= 2014-01-01) AND (lang == "EN")
 
 And a little more complex expressions by combining logical operators:
-	
-    (date >= 2014-01-01) AND ((lang == "EN") OR NOT (foo = bar))
+(date >= 2014-01-01) AND ((lang == "EN") OR NOT (foo = bar))
 
 How do we go on from here? Well lets construct a boolean expression tree that represents this arbitrary handwritten expressions.
 
@@ -110,8 +110,8 @@ With the above code we are able to construct and evaluate boolean expressions. T
 ```go
 type True struct{}
 
-func (t True) Eval(p map[string]string) bool { 
-	return true 
+func (t True) Eval(p map[string]string) bool {
+	return true
 }
 
 type False struct{}
@@ -166,9 +166,9 @@ Now lets construt the tree we drew out initially using the structs we created, a
 
 ```go
 tree := And{
-	Eq{"date","2014-01-01"}, 
+	Eq{"date","2014-01-01"},
     Or{
-    	Eq{"lang","EN"}, 
+    	Eq{"lang","EN"},
         Not{Eq{"foo","bar"}},
 	},
 }
