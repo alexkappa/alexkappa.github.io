@@ -88,15 +88,15 @@ theme_color:           rgb(41,41,43)
 
 # The string encoding which fonts to fetch from Google Fonts.
 # See: <https://hydejack.com/docs/configuration/>
-google_fonts:          Inconsolata:500;700|Source+Sans+Pro:400,700
+google_fonts:          Inconsolata:500;700|Noto+Sans:300,300i,700,700i
 
 # The text font. Expects a string that is a valid CSS font-family value.
 # To change font-weight, see _sass/variables.scss
-font:                  "'Source Sans Pro', Helvetica, Arial, sans-serif"
+font:                  "'Noto Sans', sans-serif"
 
 # The font used for headings. Expects a string that is a valid CSS font-family value.
 # To change font-weight, see _sass/variables.scss
-font_heading:          PF DinDisplay Pro, Helvetica, Arial, sans-serif
+font_heading:          "'Noto Sans', sans-serif"
 
 defaults:
   # `jekyll-seo-tag` will mark collection outputs as `BlogPosting`,
@@ -115,7 +115,7 @@ defaults:
   #     type:            featured_tags
   #   values:
   #     seo:
-  #       type:          WebPage
+  #       type:          WebPage`
 
 
 # 3rd Party Integrations
