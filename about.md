@@ -1,13 +1,16 @@
 ---
-# This page uses Hydejack's `about` layout, which shows the primary author's picture and about text at the top.
-# You can change it to the regular `page` layout if you want.
+# This page uses Hydejack's `about` layout, which shows the primary author's
+# picture and about text at the top. You can change it to the regular `page`
+# layout if you want.
 layout: about
 
 # The title of the page.
 title: About
 
 # Write a short (~150 characters) description of each blog post.
-# This description is used to preview the page on search engines, social media, etc.
+# This description is used to preview the page on search engines, social media,
+# etc.
+#
 # description: >
 #   Software Engineer. Made in 🇨🇾. Living in 🇳🇱.
 
@@ -23,7 +26,8 @@ Engineering. Before that I've lead teams at [Beat](https://thebeat.co) and
 served as a CTO at Kambr and Yieldr.
 
 On my free time I work on a few personal or community projects. I've created the
-[Auth0 Terraform Provider](https://github.com/alexkappa/terraform-provider-auth0)
-as well as the [Auth0 SDK for Go](https://github.com/go-auth0/auth0). The
-project has since been acquired by Auth0 and is maintained by the company
-itself.
+[Auth0 Terraform
+Provider](https://github.com/alexkappa/terraform-provider-auth0) as well as the
+[Auth0 SDK for Go](https://github.com/go-auth0/auth0). Read the interview
+[here](https://auth0.com/blog/community-developer-brings-hashicorp-terraform-to-auth0/).
+The project has since been acquired by Auth0.

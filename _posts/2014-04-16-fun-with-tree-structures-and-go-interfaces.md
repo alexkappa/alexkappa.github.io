@@ -162,20 +162,20 @@ func (lt Lt) Eval(p map[string]string) bool {
 }
 ```
 
-Now lets construt the tree we drew out initially using the structs we created, and evaluate some parameters against it.
+Now lets construct the tree we drew out initially using the structures we created, and evaluate some parameters against it.
 
 ```go
 tree := And{
 	Eq{"date","2014-01-01"},
-    Or{
-    	Eq{"lang","EN"},
-        Not{Eq{"foo","bar"}},
+	Or{
+		Eq{"lang","EN"},
+		Not{Eq{"foo","bar"}},
 	},
 }
 
 p := map[string]string{
 	"date": "2014-01-01",
-    "lang": "EN",
+	"lang": "EN",
 }
 
 tree.Eval(p) // evaluates to true
@@ -216,6 +216,6 @@ type Parameters interface {
 
 So instead of transforming a requests query parameters into a `map` before evaluating, I can simply pass a `url.Values` to `Eval` instead.
 
-**Update**: The source code is available on [GitHub](github.com/alexkappa/go-exp) although it's fairly modified and the API is changed quite heavily.
+**Update**: The source code is available on [GitHub](https://github.com/alexkappa/go-exp) although it's fairly modified and the API is changed quite heavily.
 
 Thanks for reading!
