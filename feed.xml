@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://alexkappa.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://alexkappa.com/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-11-14T12:12:16+00:00</updated><id>https://alexkappa.com/feed.xml</id><title type="html">alex kalyvitis</title><subtitle>Director of Software Engineering at Blueground. Previously at Beat, Yieldr and Kambr.
+</subtitle><author><name>Alex Kalyvitis</name><email>me@alexkappa.com</email></author><entry><title type="html">JSON polymorphism in Go</title><link href="https://alexkappa.com/json-polymorphism-in-go/" rel="alternate" type="text/html" title="JSON polymorphism in Go" /><published>2020-03-15T00:00:00+00:00</published><updated>2020-03-15T00:00:00+00:00</updated><id>https://alexkappa.com/json-polymorphism-in-go</id><content type="html" xml:base="https://alexkappa.com/json-polymorphism-in-go/"><![CDATA[<p class="lead">How to serialize and deserialize polymorphic JSON into Go structures.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>It is quite common in object-oriented languages to rely on polymorphism to restrict the range of types that can be used in a particular case. This can be achieved either by using an interface or by subtyping.</p>
+
+<p>In Go we can use an interface to achieve polymorphism, but subtyping however is not possible as there is no traditional notion of inheritance (e.g. via subclassing). We can embed a struct within another, but that doesn’t achieve the same effect as subtyping.</p>
+
+<h2 id="example">Example</h2>
+
+<p>Let’s take an example that is commonly used to describe this problem. A fleet of vehicles which can be either cars, trucks, bikes or any special case of vehicle we can imagine.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"vehicles"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"car"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"make"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BMW"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"M3"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"seatingCapacity"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"topSpeed"</span><span class="p">:</span><span class="w"> </span><span class="mi">250</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"truck"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"make"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Volvo"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FH"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"payloadCapacity"</span><span class="p">:</span><span class="w"> </span><span class="mi">40000</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bike"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"make"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Yamaha"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"YZF-R1"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"topSpeed"</span><span class="p">:</span><span class="w"> </span><span class="mi">293</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="types">Types</h2>
+
+<p>Let’s attempt to define types that can serialize and deserialize this payload.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Vehicle</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">Type</span>  <span class="kt">string</span> <span class="s">`json:"type"`</span>
+    <span class="n">Make</span>  <span class="kt">string</span> <span class="s">`json:"make"`</span>
+    <span class="n">Model</span> <span class="kt">string</span> <span class="s">`json:"model"`</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Car</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">SeatingCapacity</span> <span class="kt">int</span>     <span class="s">`json:"seatingCapacity"`</span>
+    <span class="n">TopSpeed</span>        <span class="kt">float64</span> <span class="s">`json:"topSpeed"`</span>
+    <span class="n">Vehicle</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Truck</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">PayloadCapacity</span> <span class="kt">float64</span> <span class="s">`json:"payloadCapacity"`</span>
+    <span class="n">Vehicle</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Bike</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">TopSpeed</span> <span class="kt">float64</span> <span class="s">`json:"topSpeed"`</span>
+    <span class="n">Vehicle</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Fleet</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">Vehicles</span> <span class="p">[]</span><span class="k">interface</span><span class="p">{}</span> <span class="s">`json:"vehicles"`</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>While Go will happily serialize our example payload using these data structures, there are some serious limitations.</p>
+
+<p>Most importantly, when deserializing Go won’t be able to figure out when to deserialize into a Car, Truck or Bike. It will instead populate a map[string]interface{} which is not really what we want.</p>
+
+<p>Also important is the fact that the vehicles are not limited much by the empty interface. In fact any type implements the empty interface.</p>
+
+<p>To address the first issue, we’ll need to implement our own MarshalJSON and UnmarshalJSON methods for the Fleet type. We’ll also need a json.RawMessage field to represent our vehicles in their intermediate state.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Fleet</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">Vehicles</span>    <span class="p">[]</span><span class="k">interface</span><span class="p">{}</span>     <span class="s">`json:"-"`</span>
+    <span class="n">RawVehicles</span> <span class="p">[]</span><span class="n">json</span><span class="o">.</span><span class="n">RawMessage</span> <span class="s">`json:"vehicles"`</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Notice how the JSON tags now instruct Go’s json package to ignore the Vehicles field when serializing/deserializing but to use RawVehicles instead.</p>
+
+<h2 id="methods">Methods</h2>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">f</span> <span class="o">*</span><span class="n">Fleet</span><span class="p">)</span> <span class="n">UnmarshalJSON</span><span class="p">(</span><span class="n">b</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+
+    <span class="k">type</span> <span class="n">fleet</span> <span class="n">Fleet</span>
+
+    <span class="n">err</span> <span class="o">:=</span> <span class="n">json</span><span class="o">.</span><span class="n">Unmarshal</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">fleet</span><span class="p">)(</span><span class="n">f</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">err</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">raw</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">f</span><span class="o">.</span><span class="n">RawVehicles</span> <span class="p">{</span>
+        <span class="k">var</span> <span class="n">v</span> <span class="n">Vehicle</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">Unmarshal</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">err</span>
+        <span class="p">}</span>
+
+        <span class="k">var</span> <span class="n">i</span> <span class="k">interface</span><span class="p">{}</span>
+        <span class="k">switch</span> <span class="n">v</span><span class="o">.</span><span class="n">Type</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="s">"car"</span><span class="o">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Car</span><span class="p">{}</span>
+        <span class="k">case</span> <span class="s">"truck"</span><span class="o">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Truck</span><span class="p">{}</span>
+        <span class="k">case</span> <span class="s">"bike"</span><span class="o">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">Bike</span><span class="p">{}</span>
+        <span class="k">default</span><span class="o">:</span>
+            <span class="k">return</span> <span class="n">errors</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="s">"unknown vehicle type"</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="n">err</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">Unmarshal</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">err</span>
+        <span class="p">}</span>
+
+        <span class="n">f</span><span class="o">.</span><span class="n">Vehicles</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">Vehicles</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="no">nil</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>What we’ve done here, is alias the Fleet type to fleet internally, so that json.Unmarshal doesn’t get trapped in an infinite loop. Once the unmarshaling takes place, f is populated with the contents of the payload. But until this point Vehicles is an empty slice, and RawVehicles is populated with all vehicles in the payload, but as raw JSON.</p>
+
+<p>At this stage we will examine each item in RawVehicles by unmarshaling it into an intermediate representation which can help us understand what type of vehicle we need to unmarshal into. We could use a map[string]interface{} but since we already abstract some common properties into the Vehicle struct, we’ll just go ahead and use that.</p>
+
+<p>Now that the type is known to us, we then use a switch statement to unmarshal the vehicle into its correct struct — one of Car, Truck or Bike. Then it’s only a matter of adding each car, truck or bike to the Vehicles slice.</p>
+
+<p>Since we introduced the RawVehicles field and instructed the json package to ignore Vehicles we’ll need to implement the MarshalJSON method to ensure the correct serialization takes place. To do so, we will serialize each item in Vehicles and copy it to RawVehicles. Then let json.Marshal do what it usually does.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">f</span> <span class="o">*</span><span class="n">Fleet</span><span class="p">)</span> <span class="n">MarshalJSON</span><span class="p">()</span> <span class="p">([]</span><span class="kt">byte</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">type</span> <span class="n">fleet</span> <span class="n">Fleet</span>
+
+    <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">Vehicles</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">f</span><span class="o">.</span><span class="n">Vehicles</span> <span class="p">{</span>
+            <span class="n">b</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">json</span><span class="o">.</span><span class="n">Marshal</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="no">nil</span><span class="p">,</span> <span class="n">err</span>
+            <span class="p">}</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">RawVehicles</span> <span class="o">=</span> <span class="nb">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">RawVehicles</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">Marshal</span><span class="p">((</span><span class="o">*</span><span class="n">fleet</span><span class="p">)(</span><span class="n">f</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>With all structs and their methods in place, we can now deserialize into Go structs from this polymorphic JSON payload.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">var</span> <span class="n">f</span> <span class="o">*</span><span class="n">Fleet</span>
+<span class="n">err</span> <span class="o">:=</span> <span class="n">json</span><span class="o">.</span><span class="n">Unmarshal</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="n">body</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">f</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">Fatal</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">vehicle</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">f</span><span class="o">.</span><span class="n">Vehicles</span> <span class="p">{</span>
+
+    <span class="k">switch</span> <span class="n">v</span> <span class="o">:=</span> <span class="n">vehicle</span><span class="o">.</span><span class="p">(</span><span class="k">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="o">*</span><span class="n">Car</span><span class="o">:</span>
+        <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%s %s has a seating capacity of %d and a top speed of %.2f km/h</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">Make</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">SeatingCapacity</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">TopSpeed</span><span class="p">)</span>
+    <span class="k">case</span> <span class="o">*</span><span class="n">Truck</span><span class="o">:</span>
+        <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%s %s has a payload capacity of %.2f kg</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">Make</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">PayloadCapacity</span><span class="p">)</span>
+    <span class="k">case</span> <span class="o">*</span><span class="n">Bike</span><span class="o">:</span>
+        <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"%s %s has a top speed of %.2f km/h</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">Make</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">TopSpeed</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now that we addressed the correct serialization and deserialization, we can improve upon the example by replacing the empty interface with something that actually limits the types we can use in the Vehicles slice. In principle, we’ll only be replacing it with a more narrow interface, and make sure our vehicles implement that interface.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">FleetVehicle</span> <span class="k">interface</span> <span class="p">{</span>
+    <span class="n">MakeAndModel</span><span class="p">()</span> <span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This interface is now much narrower. Only types that implement MakeAndModel() function are legal implementations of FleetVehicle. Let’s replace all instances of the empty interface and replace them with FleetVehicle.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Fleet</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="n">Vehicles</span>    <span class="p">[]</span><span class="n">FleetVehicle</span>    <span class="s">`json:"-"`</span>
+    <span class="n">RawVehicles</span> <span class="p">[]</span><span class="n">json</span><span class="o">.</span><span class="n">RawMessage</span> <span class="s">`json:"vehicles"`</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Using Go’s interfaces and a little creative use of the MarshalJSON and UnmarshalJSON methods, we were able to serialize and deserialize polymorphic JSON data structures into Go structs.</p>
+
+<p>By replacing the empty interface with a smaller, more narrow interface, we allow ourselves to manipulate polymorphic objects without necessarily knowing their concrete implementation.</p>
+
+<p>See the complete example <a href="https://gist.github.com/alexkappa/4b541a712dc06c047a38b005178978b5">here</a>.</p>]]></content><author><name>Alex Kalyvitis</name><email>me@alexkappa.com</email></author><category term="go" /><summary type="html"><![CDATA[How to serialize and deserialize polymorphic JSON into Go structures.]]></summary></entry><entry><title type="html">Trie</title><link href="https://alexkappa.com/go-trie/" rel="alternate" type="text/html" title="Trie" /><published>2015-01-03T00:00:00+00:00</published><updated>2015-01-03T00:00:00+00:00</updated><id>https://alexkappa.com/go-trie</id><content type="html" xml:base="https://alexkappa.com/go-trie/"><![CDATA[<p class="lead">Recently I’ve been working on a Trie implementation and I was a surprised and delighted from the simpicity of the data structure.</p>
+
+<p>The first time I came across the Trie data structure, I was looking to solve a problem where a typeahead field had a really large dictionary to query and would chocke every time the search was triggered. After stumbling upon John Resig’s <a href="http://ejohn.org/blog/javascript-trie-performance-analysis">JavaScript implementation</a> I wanted to see how it would translate in Go.</p>
+
+<p>So without further ado, I’d like to share with what I found interresting about the Go version.</p>
+
+<h2 id="the-data-type">The Data Type</h2>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Node</span> <span class="k">map</span><span class="p">[</span><span class="kt">rune</span><span class="p">]</span><span class="n">Node</span>
+</code></pre></div></div>
+
+<p>Using self-referential type definition we are able to describe our tree nodes with nothing more than just built-in types.</p>
+
+<h2 id="building-an-index">Building an Index</h2>
+
+<p>Some parts are omited from the following example but this is where the magic happens.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">node</span> <span class="n">Node</span><span class="p">)</span> <span class="n">Insert</span><span class="p">(</span><span class="n">s</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">s</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">==</span> <span class="no">nil</span> <span class="p">{</span>
+			<span class="n">node</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">New</span><span class="p">()</span>
+		<span class="p">}</span>
+		<span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+	<span class="p">}</span>
+	<span class="n">node</span><span class="o">.</span><span class="n">End</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Notice how we walk down the tree for every rune in the string with <code class="language-plaintext highlighter-rouge">node = node[r]</code>.</p>
+
+<p>You’ve probably noticed the <code class="language-plaintext highlighter-rouge">node.End()</code> near the end. This inserts an invalid UTF8 character at the current node marking the end of a word.</p>
+
+<h2 id="search">Search</h2>
+
+<p>Searching is as simple as walking down the tree matching each letter in the search term to a key in each node. When we reach the end of the search term we have found a match, so the string indexed by the current node plus the strings from all its child nodes should be returned as results to the query.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">node</span> <span class="n">Node</span><span class="p">)</span> <span class="n">Search</span><span class="p">(</span><span class="n">s</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="n">res</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">s</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="n">_</span><span class="p">,</span> <span class="n">ok</span> <span class="o">:=</span> <span class="n">node</span><span class="p">[</span><span class="n">r</span><span class="p">];</span> <span class="n">ok</span> <span class="p">{</span>
+			<span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">-</span><span class="n">utf8</span><span class="o">.</span><span class="n">RuneLen</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nb">append</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">All</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">...</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">res</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The code is available on <a href="https://github.com/alexkappa/trie">GitHub</a> and the API docs at the <a href="http://godoc.org/github.com/alexkappa/trie">usual place</a>. I would love to hear your feedback. Enjoy!</p>]]></content><author><name>Alex Kalyvitis</name><email>me@alexkappa.com</email></author><category term="go" /><summary type="html"><![CDATA[Recently I’ve been working on a Trie implementation and I was a surprised and delighted from the simpicity of the data structure.]]></summary></entry><entry><title type="html">Testing in Go</title><link href="https://alexkappa.com/testing-in-go/" rel="alternate" type="text/html" title="Testing in Go" /><published>2014-10-31T00:00:00+00:00</published><updated>2014-10-31T00:00:00+00:00</updated><id>https://alexkappa.com/testing-in-go</id><content type="html" xml:base="https://alexkappa.com/testing-in-go/"><![CDATA[<p class="lead">I’ve been hearing a lot of positive feedback about Google’s new programming language for some time now. Interfaces, simplicity, concurrency are some of the things you will definitely hear being praised as you get involved with the community.</p>
+
+<p>However my favourite thing about the language is something that isn’t your typical praising point. Testing is often one of those things you know you need, but keep neglecting because it isn’t easy and it’s value is not immediatelly clear from a business perspective.</p>
+
+<p>During my short career in making software, I found that people really struggle when it comes to testing their code. I struggled myself when faced with the intricacies of testing object oriented code. The concept of test stubs and mocks was something that is challenging to most newcomers.</p>
+
+<p>Testing in Go is remarkably powerful and it promotes high quality testable code by making it extremely easy to write tests. Now I’m not going to go through the elementary <code class="language-plaintext highlighter-rouge">hello</code> and <code class="language-plaintext highlighter-rouge">test_hello</code> introduction, rather start off with something that probably most Go developers have worked on at least once. An http handler.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">main</span>
+
+<span class="k">import</span> <span class="s">"net/http"</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">http</span><span class="o">.</span><span class="n">HandleFunc</span><span class="p">(</span><span class="s">"/foo"</span><span class="p">,</span> <span class="n">handleFoo</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">handleFoo</span><span class="p">(</span><span class="n">w</span> <span class="n">http</span><span class="o">.</span><span class="n">ResponseWriter</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span><span class="n">http</span><span class="o">.</span><span class="n">Request</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">w</span><span class="o">.</span><span class="n">Write</span><span class="p">([]</span><span class="kt">byte</span><span class="p">(</span><span class="s">"bar"</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This handler listens for HTTP calls to <code class="language-plaintext highlighter-rouge">/foo</code> and responds with <code class="language-plaintext highlighter-rouge">"bar"</code>. Specifically <code class="language-plaintext highlighter-rouge">"bar"</code> is written to <code class="language-plaintext highlighter-rouge">w</code> which is an <code class="language-plaintext highlighter-rouge">http.ResponseWriter</code>. In order to verify what has been written to the response we need to examine <code class="language-plaintext highlighter-rouge">w</code> after the call to <code class="language-plaintext highlighter-rouge">handleFoo</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">http.ResponseWriter</code> is an interface and is defined as:</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">ResponseWriter</span> <span class="k">interface</span> <span class="p">{</span>
+	<span class="n">Header</span><span class="p">()</span> <span class="n">Header</span>
+	<span class="n">WriteHeader</span><span class="p">(</span><span class="n">http</span><span class="o">.</span><span class="n">StatusOK</span><span class="p">)</span>
+	<span class="n">Write</span><span class="p">([]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+	<span class="n">WriteHeader</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>We could easliy create our own implementation of ResponseWriter to use with our tests, but happily the standard library already has the handy <code class="language-plaintext highlighter-rouge">ResponseRecorder</code> in the <code class="language-plaintext highlighter-rouge">net/http/httptest</code> package.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">main</span>
+
+<span class="k">import</span> <span class="p">(</span>
+	<span class="s">"testing"</span>
+	<span class="s">"net/http"</span>
+	<span class="s">"net/http/httptest"</span>
+<span class="p">)</span>
+
+<span class="k">func</span> <span class="n">TestHandleFoo</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span><span class="n">testing</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">r</span><span class="p">,</span> <span class="n">_</span> <span class="o">:=</span> <span class="n">http</span><span class="o">.</span><span class="n">NewRequest</span><span class="p">(</span><span class="s">""</span><span class="p">,</span> <span class="s">""</span><span class="p">,</span> <span class="no">nil</span><span class="p">)</span>
+	<span class="n">w</span> <span class="o">:=</span> <span class="n">httptest</span><span class="o">.</span><span class="n">NewRecorder</span><span class="p">()</span>
+
+    <span class="n">handleFoo</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">Body</span><span class="o">.</span><span class="n">String</span><span class="p">()</span> <span class="o">!=</span> <span class="s">"bar"</span> <span class="p">{</span>
+    	<span class="n">t</span><span class="o">.</span><span class="n">Errorf</span><span class="p">(</span><span class="s">"expected %q but instead got %q"</span><span class="p">,</span> <span class="s">"bar"</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">Body</span><span class="o">.</span><span class="n">String</span><span class="p">())</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Of course this example is hardly complex and it doesn’t have any dependencies. Typically an HTTP handler would read/write something from a database, log something to a file, or render a template. In that case, we would probably prefer to implement an <code class="language-plaintext highlighter-rouge">http.Handler</code> instead of an <code class="language-plaintext highlighter-rouge">http.HandlerFunc</code> which is what <code class="language-plaintext highlighter-rouge">handleFoo</code> is, so we can define these dependencies.</p>
+
+<p>I’ll describe a way to define these dependencies in an upcoming post.</p>
+
+<p>Thanks for reading!</p>]]></content><author><name>Alex Kalyvitis</name><email>me@alexkappa.com</email></author><category term="go" /><summary type="html"><![CDATA[I’ve been hearing a lot of positive feedback about Google’s new programming language for some time now. Interfaces, simplicity, concurrency are some of the things you will definitely hear being praised as you get involved with the community.]]></summary></entry><entry><title type="html">Fun with binary expression trees and Go</title><link href="https://alexkappa.com/fun-with-tree-structures-and-go-interfaces/" rel="alternate" type="text/html" title="Fun with binary expression trees and Go" /><published>2014-04-16T00:00:00+00:00</published><updated>2014-04-16T00:00:00+00:00</updated><id>https://alexkappa.com/fun-with-tree-structures-and-go-interfaces</id><content type="html" xml:base="https://alexkappa.com/fun-with-tree-structures-and-go-interfaces/"><![CDATA[<p class="lead">Recently, I found myself trying to implement a mechanism, able to evaluate expressions. Essentially what I needed was a <a href="http://en.wikipedia.org/wiki/Binary_expression_tree">binary expression tree</a>. I used Go for this project, and quickly came to a delightful surprise that using Go’s extremely powerful interface mechanisms, it became extremely easy to implement and extend.</p>
+
+<h2 id="before-we-dive-in">Before we dive in</h2>
+
+<p>From Wikipedia:</p>
+
+<blockquote>
+  <p>A binary expression tree is a specific application of a binary tree to evaluate certain expressions. Two common types of expressions that a binary expression tree can represent are algebraic and boolean. These trees can represent expressions that contain both unary and binary operators.</p>
+</blockquote>
+
+<blockquote>
+  <p>The leaves of a binary expression tree are operands, such as constants or variable names, and the other nodes contain operators.</p>
+</blockquote>
+
+<blockquote>
+  <p>These particular trees happen to be binary, because all of the operations are binary, and although this is the simplest case, it is possible for nodes to have more than two children. It is also possible for a node to have only one child, as is the case with the unary minus operator. An expression tree, T, can be evaluated by applying the operator at the root to the values obtained by recursively evaluating the left and right subtrees.</p>
+</blockquote>
+
+<p>So a binary expression tree</p>
+
+<ul>
+  <li>can be algebraic (addition, multiplication, etc) or boolean (and, or, not).</li>
+  <li>has operands as leaves and operators as the other nodes.</li>
+  <li>node usually has two children, but it may have more (or one).</li>
+</ul>
+
+<h2 id="so-how-are-we-going-to-use-them">So how are we going to use them?</h2>
+
+<p>Our need for binary expression trees arose by wanting to evaluate whether a set of url query parameters matches a particular pattern. So the pattern <code class="language-plaintext highlighter-rouge">date &gt;= 2014-01-01</code> should evaluate for <code class="language-plaintext highlighter-rouge">/path?date=2014-10-10</code> but should not evaluate for <code class="language-plaintext highlighter-rouge">/path?date=2013-12-12</code>. Alright that was too easy. How about combining conditions together with logical operators?</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(date &gt;= 2014-01-01) AND (lang == "EN")
+</code></pre></div></div>
+
+<p>And a little more complex expressions by combining logical operators:
+(date &gt;= 2014-01-01) AND ((lang == “EN”) OR NOT (foo = bar))</p>
+
+<p>How do we go on from here? Well lets construct a boolean expression tree that represents this arbitrary handwritten expressions.</p>
+
+<p><img src="/assets/img/content/fun-with-tree-structures-and-go-interfaces/binary_expression_tree_example-2.png" alt="alt" /></p>
+
+<h2 id="okay-lets-code">Okay, lets code</h2>
+
+<p>To get things started, it makes sense to see every node in the tree as an object, whose children are themselves objects. Starting from the top, the <code class="language-plaintext highlighter-rouge">AND</code> node could look like this:</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">And</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Left</span><span class="p">,</span> <span class="n">Right</span> <span class="k">interface</span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now, although this looks simple enough, we haven’t yet addressed the trees functionality, which is why we need such a tree in the first place. Remeber we need to evaluate a set of query parameters against this tree and the response would be a simple true or false.</p>
+
+<p>So lets add this to the topmost node we just created.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="n">And</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="c">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">And</code> struct has a method called <code class="language-plaintext highlighter-rouge">Eval</code> which we can supply with parameters and it should tell us if the parameters match the conditions or not.</p>
+
+<p>Now we need to write the implementation of the Eval method which should evaluate it’s children.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="n">And</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">a</span><span class="o">.</span><span class="n">Left</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">a</span><span class="o">.</span><span class="n">Right</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Can you already see where I’m going with this? Struct <code class="language-plaintext highlighter-rouge">And</code> is a node in the tree, which has two children, themselves nodes in the tree. All of them have an <code class="language-plaintext highlighter-rouge">Eval</code> that take parameters as arguments and return a boolean.</p>
+
+<p>If <code class="language-plaintext highlighter-rouge">And</code>, <code class="language-plaintext highlighter-rouge">Or</code>, <code class="language-plaintext highlighter-rouge">Not</code> and all the operators need to have an <code class="language-plaintext highlighter-rouge">Eval</code> function, we can group them by a common interface? Let’s call that interface <code class="language-plaintext highlighter-rouge">Node</code>.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Node</span> <span class="k">interface</span><span class="p">{</span>
+	<span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Let’s change the <code class="language-plaintext highlighter-rouge">And</code> struct to use Nodes as it’s children instead of arbitrary interfaces.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">And</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Left</span><span class="p">,</span> <span class="n">Right</span> <span class="n">Node</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now the <code class="language-plaintext highlighter-rouge">Eval</code> method we defined on <code class="language-plaintext highlighter-rouge">And</code> is correct and would compile and run correctly. However our tree is incomplete as we haven’t defined <code class="language-plaintext highlighter-rouge">Or</code>, <code class="language-plaintext highlighter-rouge">Not</code> or any operators yet.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Or</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Left</span><span class="p">,</span> <span class="n">Right</span> <span class="n">Node</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">o</span> <span class="n">Or</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">o</span><span class="o">.</span><span class="n">Left</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">||</span> <span class="n">o</span><span class="o">.</span><span class="n">Right</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Not</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="n">Elem</span> <span class="n">Node</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">n</span> <span class="n">Not</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">!</span><span class="n">n</span><span class="o">.</span><span class="n">Elem</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>With the above code we are able to construct and evaluate boolean expressions. To showcase an example, we’ll need a couple of helper structs, <code class="language-plaintext highlighter-rouge">True</code> and <code class="language-plaintext highlighter-rouge">False</code> which always evaluate to <code class="language-plaintext highlighter-rouge">true</code> and <code class="language-plaintext highlighter-rouge">false</code> respectively.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">True</span> <span class="k">struct</span><span class="p">{}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">t</span> <span class="n">True</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="no">true</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">False</span> <span class="k">struct</span><span class="p">{}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">f</span> <span class="n">False</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="no">false</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Let’s try it out:</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">t1</span> <span class="o">:=</span> <span class="n">And</span><span class="p">{</span><span class="n">True</span><span class="p">{},</span> <span class="n">True</span><span class="p">{}}</span>
+<span class="n">t1</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="no">nil</span><span class="p">)</span> <span class="c">// returns true</span>
+
+<span class="n">t2</span> <span class="o">:=</span> <span class="n">Or</span><span class="p">{</span><span class="n">False</span><span class="p">{},</span> <span class="n">True</span><span class="p">{}}</span>
+<span class="n">t2</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="no">nil</span><span class="p">)</span> <span class="c">// returns true</span>
+</code></pre></div></div>
+
+<p>Next we can define algebraic expressions like <code class="language-plaintext highlighter-rouge">equals</code>, <code class="language-plaintext highlighter-rouge">greater than</code> and <code class="language-plaintext highlighter-rouge">less than</code>.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Eq</span> <span class="k">struct</span><span class="p">{</span> <span class="n">Key</span><span class="p">,</span> <span class="n">Value</span> <span class="kt">string</span> <span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">eq</span> <span class="n">Eq</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="n">val</span><span class="p">,</span> <span class="n">found</span> <span class="o">:=</span> <span class="n">p</span><span class="p">[</span><span class="n">eq</span><span class="o">.</span><span class="n">Key</span><span class="p">];</span> <span class="n">found</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="n">val</span> <span class="o">==</span> <span class="n">eq</span><span class="o">.</span><span class="n">Value</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="no">false</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Gt</span> <span class="k">struct</span><span class="p">{</span> <span class="n">Key</span><span class="p">,</span> <span class="n">Value</span> <span class="kt">string</span> <span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">gt</span> <span class="n">Gt</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="n">val</span><span class="p">,</span> <span class="n">found</span> <span class="o">:=</span> <span class="n">p</span><span class="p">[</span><span class="n">gt</span><span class="o">.</span><span class="n">Key</span><span class="p">];</span> <span class="n">found</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">gt</span><span class="o">.</span><span class="n">Value</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="no">false</span>
+<span class="p">}</span>
+
+<span class="k">type</span> <span class="n">Lt</span> <span class="k">struct</span><span class="p">{</span> <span class="n">Key</span><span class="p">,</span> <span class="n">Value</span> <span class="kt">string</span> <span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">lt</span> <span class="n">Lt</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="n">val</span><span class="p">,</span> <span class="n">found</span> <span class="o">:=</span> <span class="n">p</span><span class="p">[</span><span class="n">lt</span><span class="o">.</span><span class="n">Key</span><span class="p">];</span> <span class="n">found</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">lt</span><span class="o">.</span><span class="n">Value</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="no">false</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now lets construct the tree we drew out initially using the structures we created, and evaluate some parameters against it.</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">tree</span> <span class="o">:=</span> <span class="n">And</span><span class="p">{</span>
+	<span class="n">Eq</span><span class="p">{</span><span class="s">"date"</span><span class="p">,</span><span class="s">"2014-01-01"</span><span class="p">},</span>
+	<span class="n">Or</span><span class="p">{</span>
+		<span class="n">Eq</span><span class="p">{</span><span class="s">"lang"</span><span class="p">,</span><span class="s">"EN"</span><span class="p">},</span>
+		<span class="n">Not</span><span class="p">{</span><span class="n">Eq</span><span class="p">{</span><span class="s">"foo"</span><span class="p">,</span><span class="s">"bar"</span><span class="p">}},</span>
+	<span class="p">},</span>
+<span class="p">}</span>
+
+<span class="n">p</span> <span class="o">:=</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span>
+	<span class="s">"date"</span><span class="o">:</span> <span class="s">"2014-01-01"</span><span class="p">,</span>
+	<span class="s">"lang"</span><span class="o">:</span> <span class="s">"EN"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">tree</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="c">// evaluates to true</span>
+</code></pre></div></div>
+
+<p>I’ve published the examples on <a href="http://github.com/alexkappa/tree">GitHub</a>, so feel free to fork the repo and adapt it to your needs.</p>
+
+<h2 id="final-thoughts">Final thoughts</h2>
+
+<p>Go’s interfaces made tree nodes easliy interchangeable and extremely easy to construct. Additionally, tree nodes can be added without any additions to the package. If you need to create your own operators (for example <code class="language-plaintext highlighter-rouge">&gt;=</code>, <code class="language-plaintext highlighter-rouge">&lt;=</code>, <code class="language-plaintext highlighter-rouge">before</code>, <code class="language-plaintext highlighter-rouge">after</code>) all you have to do is define an <code class="language-plaintext highlighter-rouge">Eval</code> method for it and it implicitly becomes a <code class="language-plaintext highlighter-rouge">Node</code>.</p>
+
+<p>I’ve tried to keep the examples easy to follow, so I haven’t talked at all about operator values and type casting. For example you might want to implement a <code class="language-plaintext highlighter-rouge">before</code> or <code class="language-plaintext highlighter-rouge">after</code> operator that acts on dates, or a <code class="language-plaintext highlighter-rouge">contains</code> operator that acts on strings. The implementation of an operator is completely up to you, so if you need to type cast, or parse a date you are free to do so. A quick example:</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Before</span> <span class="k">struct</span><span class="p">{</span> <span class="n">Key</span><span class="p">,</span> <span class="n">Value</span> <span class="kt">string</span> <span class="p">}</span>
+
+<span class="k">func</span> <span class="p">(</span><span class="n">b</span> <span class="n">Before</span><span class="p">)</span> <span class="n">Eval</span><span class="p">(</span><span class="n">p</span> <span class="k">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="n">val</span><span class="p">,</span> <span class="n">found</span> <span class="o">:=</span> <span class="n">p</span><span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">Key</span><span class="p">];</span> <span class="n">found</span> <span class="p">{</span>
+		<span class="n">ta</span><span class="p">,</span> <span class="n">ea</span> <span class="o">:=</span> <span class="n">time</span><span class="o">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">"2006-01-02"</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+		<span class="n">tb</span><span class="p">,</span> <span class="n">eb</span> <span class="o">:=</span> <span class="n">time</span><span class="o">.</span><span class="n">Parse</span><span class="p">(</span><span class="s">"2006-01-02"</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">ea</span> <span class="o">!=</span> <span class="no">nil</span> <span class="o">||</span> <span class="n">eb</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="no">false</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="n">ta</span><span class="o">.</span><span class="n">Before</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="no">false</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>Another thing I didn’t mention is that parameters in my use case came from the requests URL query parameters, meaning their type is <a href="http://golang.org/pkg/net/url/#Values"><code class="language-plaintext highlighter-rouge">url.Values</code></a>. <code class="language-plaintext highlighter-rouge">url.Values</code> is a map itself with additional getter and setter methods. So I adapted the <code class="language-plaintext highlighter-rouge">Node</code> interface’s arguments from <code class="language-plaintext highlighter-rouge">map[string]string</code> to <code class="language-plaintext highlighter-rouge">Parameters</code>. And <code class="language-plaintext highlighter-rouge">Parameters</code> is an interface defined like so:</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">type</span> <span class="n">Parameters</span> <span class="k">interface</span> <span class="p">{</span>
+	<span class="n">Get</span><span class="p">(</span><span class="n">key</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>So instead of transforming a requests query parameters into a <code class="language-plaintext highlighter-rouge">map</code> before evaluating, I can simply pass a <code class="language-plaintext highlighter-rouge">url.Values</code> to <code class="language-plaintext highlighter-rouge">Eval</code> instead.</p>
+
+<p><strong>Update</strong>: The source code is available on <a href="https://github.com/alexkappa/go-exp">GitHub</a> although it’s fairly modified and the API is changed quite heavily.</p>
+
+<p>Thanks for reading!</p>]]></content><author><name>Alex Kalyvitis</name><email>me@alexkappa.com</email></author><category term="go" /><summary type="html"><![CDATA[Recently, I found myself trying to implement a mechanism, able to evaluate expressions. Essentially what I needed was a binary expression tree. I used Go for this project, and quickly came to a delightful surprise that using Go’s extremely powerful interface mechanisms, it became extremely easy to implement and extend.]]></summary></entry></feed>

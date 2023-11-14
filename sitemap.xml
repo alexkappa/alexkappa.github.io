@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>https://alexkappa.com/go/</loc>
+<lastmod>2023-11-14T12:12:16+00:00</lastmod>
+</url>
+<url>
+<loc>https://alexkappa.com/fun-with-tree-structures-and-go-interfaces/</loc>
+<lastmod>2014-04-16T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://alexkappa.com/testing-in-go/</loc>
+<lastmod>2014-10-31T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://alexkappa.com/go-trie/</loc>
+<lastmod>2015-01-03T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://alexkappa.com/json-polymorphism-in-go/</loc>
+<lastmod>2020-03-15T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://alexkappa.com/about/</loc>
+</url>
+<url>
+<loc>https://alexkappa.com/</loc>
+</url>
+<url>
+<loc>https://alexkappa.com/assets/Resume.pdf</loc>
+<lastmod>2023-11-14T12:10:38+00:00</lastmod>
+</url>
+</urlset>
